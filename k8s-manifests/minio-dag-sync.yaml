@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dag-sync-script
+  namespace: airflow
+data:
+  sync.sh: |
+    #!/bin/sh
+    set -e
+    echo "Starting MinIO DAG sync daemon..."
+    mc alias set minio http://minio.minio-dev.svc.cluster.local:9000 minioadmin minioadmin
+    mkdir -p /mnt/airflow-dags
+    while true; do
+      echo "Syncing DAGs from minio/airflow-dags to /mnt/airflow-dags..."
+      mc cp --recursive minio/airflow-dags/ /mnt/airflow-dags/
+      sleep 60
+    done
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: dag-sync
+  namespace: airflow
+spec:
+  selector:
+    matchLabels:
+      app: dag-sync
+  template:
+    metadata:
+      labels:
+        app: dag-sync
+    spec:
+      containers:
+        - name: dag-sync
+          image: minio/mc
+          command: ["/bin/sh", "/scripts/sync.sh"]
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+            - name: dags
+              mountPath: /mnt/airflow-dags
+      volumes:
+        - name: scripts
+          configMap:
+            name: dag-sync-script
+            defaultMode: 0755
+        - name: dags
+          hostPath:
+            path: /mnt/airflow-dags
+            type: DirectoryOrCreate
