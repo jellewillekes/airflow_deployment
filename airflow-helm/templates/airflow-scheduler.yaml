@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount.scheduler }}
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+  template:
+    metadata:
+      labels:
+        app: airflow-scheduler
+    spec:
+      containers:
+        - name: scheduler
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
+              value: postgresql+psycopg2://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@{{ .Values.postgres.host }}:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}
+          command: ["bash", "-c"]
+          args: ["airflow scheduler"]
+          volumeMounts:
+            - name: dags
+              mountPath: {{ .Values.dags.mountPath }}
+            - name: logs
+              mountPath: {{ .Values.logs.mountPath }}
+      volumes:
+        - name: dags
+          hostPath:
+            path: {{ .Values.dags.hostPath }}
+            type: Directory
+        - name: logs
+          persistentVolumeClaim:
+            claimName: {{ .Values.logs.pvcName }}
