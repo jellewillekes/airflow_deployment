@@ -13,6 +13,7 @@ data:
     while true; do
       echo "Syncing DAGs from minio/airflow-dags to /mnt/airflow-dags..."
       mc cp --recursive minio/airflow-dags/ /mnt/airflow-dags/
+      echo "Sync complete. Sleeping for 60s..."
       sleep 60
     done
 ---
