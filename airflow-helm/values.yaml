@@ -1,0 +1,44 @@
+namespace: airflow
+
+image:
+  repository: apache/airflow
+  tag: "2.8.2"
+  pullPolicy: IfNotPresent
+
+replicaCount:
+  scheduler: 1
+  webserver: 1
+
+postgres:
+  host: postgres.airflow.svc.cluster.local
+  port: 5432
+  username: airflow
+  password: airflow
+  database: airflow
+
+airflow:
+  webserver:
+    port: 8080
+    nodePort: 30080
+    user:
+      username: admin
+      password: admin
+      firstname: Admin
+      lastname: User
+      email: admin@example.com
+
+minio:
+  namespace: minio-dev
+  image: minio/minio:latest
+  accessKey: minioadmin
+  secretKey: minioadmin
+  s3Port: 9000
+  consolePort: 9001
+
+dags:
+  hostPath: /mnt/airflow-dags
+  mountPath: /opt/airflow/dags
+
+logs:
+  pvcName: airflow-logs-pvc
+  mountPath: /opt/airflow/logs
