@@ -36,11 +36,16 @@ spec:
           volumeMounts:
             - name: dags
               mountPath: /opt/airflow/dags
+            - name: logs
+              mountPath: /opt/airflow/logs
       volumes:
         - name: dags
           hostPath:
             path: /mnt/airflow-dags
             type: Directory
+        - name: logs
+          persistentVolumeClaim:
+            claimName: airflow-logs-pvc
 ---
 apiVersion: v1
 kind: Service
